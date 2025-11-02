@@ -4,7 +4,7 @@
   "description": "A WhatsApp bot that creates, merges, edits, and compresses PDFs directly from WhatsApp messages.",
   "main": "app.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node app.js"
   },
   "keywords": ["whatsapp", "pdf", "bot", "nodejs", "automation"],
   "author": "Your Name",
