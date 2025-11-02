@@ -20,6 +20,31 @@ let userPdfFile = {};
 let userMergeFiles = {};
 let userCompressionQuality = {};
 
+
+const sessionTimeouts = {};
+
+function clearUserSession(from) {
+  delete userStates[from];
+  delete userImages[from];
+  delete userPdfFile[from];
+  delete userMergeFiles[from];
+  delete userCompressionQuality[from];
+
+  if (sessionTimeouts[from]) {
+    clearTimeout(sessionTimeouts[from]);
+    delete sessionTimeouts[from];
+  }
+}
+
+function resetUserTimeout(from) {
+  if (sessionTimeouts[from]) clearTimeout(sessionTimeouts[from]);
+  sessionTimeouts[from] = setTimeout(() => {
+    console.log(`🕒 Session expired for ${from}`);
+    clearUserSession(from);
+  }, 10 * 60 * 1000); // 10 minutes
+}
+
+
 // ✅ Verify webhook
 exports.verifyWebhook = (req, res) => {
   const mode = req.query["hub.mode"];
@@ -40,6 +65,7 @@ exports.handleWebhook = async (req, res) => {
     if (!msg) return res.sendStatus(200);
 
     const from = msg.from;
+    resetUserTimeout(from);
     const type = msg.type;
     const userName = contact?.profile?.name || "there";
 
@@ -137,12 +163,13 @@ exports.handleWebhook = async (req, res) => {
         await sendText(from, "✅ Your enhanced PDF is ready! 📄✨");
 
         if (Math.random() < 0.2) {
-          await sendText(from, "_🤖 DocuBot says thanks! — built by Sanjay_");
+          await sendText(from, "_🤖 DocuBot — blame Sanjay if I misbehave 😜_");
+        } else {
+          await sendText(from, "_⚙️ DocuBot — Sanjay made me do this 😏_");
         }
 
         userImages[from].forEach((img) => fs.unlinkSync(img));
-        delete userImages[from];
-        userStates[from] = null;
+        clearUserSession(from);
 
         await sendInteractiveMenu(from);
         return res.sendStatus(200);
@@ -169,9 +196,12 @@ exports.handleWebhook = async (req, res) => {
         await sendDocument(from, newPath);
         await sendText(from, "✅ Pages removed successfully!");
 
+        if (Math.random() < 0.2) {
+          await sendText(from, "_🤖 DocuBot says thanks! — built by Sanjay_");
+        }
+
         fs.unlinkSync(userPdfFile[from]);
-        delete userPdfFile[from];
-        userStates[from] = null;
+        clearUserSession(from);
 
         await sendInteractiveMenu(from);
         return res.sendStatus(200);
@@ -198,10 +228,12 @@ exports.handleWebhook = async (req, res) => {
 
           await sendDocument(from, finalPath);
           await sendText(from, "✅ Your merged PDF is ready! 📄✨");
+          if (Math.random() < 0.2) {
+            await sendText(from, "_🤖 DocuBot says thanks! — built by Sanjay_");
+          }
 
           userMergeFiles[from].forEach((f) => fs.unlinkSync(f));
-          delete userMergeFiles[from];
-          userStates[from] = null;
+          clearUserSession(from);
 
           await sendInteractiveMenu(from);
           return res.sendStatus(200);
@@ -233,8 +265,7 @@ exports.handleWebhook = async (req, res) => {
         // Cleanup
         fs.unlinkSync(originalPdfPath);
         fs.unlinkSync(compressedPath);
-        delete userPdfFile[from];
-        userStates[from] = null;
+        clearUserSession(from);
 
         await sendInteractiveMenu(from);
         return res.sendStatus(200);
