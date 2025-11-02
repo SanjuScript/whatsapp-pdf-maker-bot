@@ -38,7 +38,7 @@ exports.sendInteractiveMenu = async (to) => {
         text: "You can choose up to 10 options here.",
       },
       action: {
-        button: "Open Menu", // the button that opens bottom sheet
+        button: "Open Menu",
         sections: [
           {
             title: "🛠 PDF Tools",

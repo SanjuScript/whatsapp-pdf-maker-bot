@@ -33,12 +33,34 @@ exports.verifyWebhook = (req, res) => {
 // ✅ Main webhook handler
 exports.handleWebhook = async (req, res) => {
   try {
-    const msg = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+    const value = req.body.entry?.[0]?.changes?.[0]?.value;
+    const msg = value?.messages?.[0];
+    const contact = value?.contacts?.[0];
+
     if (!msg) return res.sendStatus(200);
 
     const from = msg.from;
     const type = msg.type;
+    const userName = contact?.profile?.name || "there";
 
+    if (
+      type === "text" &&
+      /\b(hi|hy|hyy|hai|halo|helo|hello|hey)\b/i.test(msg.text.body.trim())
+    ) {
+      await sendText(
+        from,
+        `👋 Hey *${userName}*! I'm *DocuBot 🤖*, your personal PDF assistant.\n\n` +
+          `I can help you:\n` +
+          `• 📄 Make PDFs from images\n` +
+          `• ✂️ Remove pages\n` +
+          `• 🧩 Merge PDFs\n` +
+          `• 📦 Compress files\n\n` +
+          `Let's get started! Choose a tool below 👇`
+      );
+
+      await sendInteractiveMenu(from);
+      return res.sendStatus(200);
+    }
     // Handle interactive menu selection
     if (type === "interactive") {
       const id =
@@ -114,6 +136,10 @@ exports.handleWebhook = async (req, res) => {
         await sendDocument(from, pdfPath);
         await sendText(from, "✅ Your enhanced PDF is ready! 📄✨");
 
+        if (Math.random() < 0.2) {
+          await sendText(from, "_🤖 DocuBot says thanks! — built by Sanjay_");
+        }
+
         userImages[from].forEach((img) => fs.unlinkSync(img));
         delete userImages[from];
         userStates[from] = null;
@@ -157,7 +183,10 @@ exports.handleWebhook = async (req, res) => {
 
         if (lower.startsWith("done")) {
           if (!userMergeFiles[from]?.length) {
-            await sendText(from, "⚠️ Send at least 2 PDFs before typing *done*.");
+            await sendText(
+              from,
+              "⚠️ Send at least 2 PDFs before typing *done*."
+            );
             return res.sendStatus(200);
           }
 
@@ -180,7 +209,10 @@ exports.handleWebhook = async (req, res) => {
       }
 
       // --- Await compression quality ---
-      if (userStates[from] === "await_compression_quality" && userPdfFile[from]) {
+      if (
+        userStates[from] === "await_compression_quality" &&
+        userPdfFile[from]
+      ) {
         const quality = parseInt(text);
         if (isNaN(quality) || quality < 1 || quality > 100) {
           await sendText(from, "⚠️ Please send a number between 1 and 100.");
@@ -189,7 +221,10 @@ exports.handleWebhook = async (req, res) => {
 
         const originalPdfPath = userPdfFile[from];
         const pdfName = path.basename(originalPdfPath, ".pdf");
-        await sendText(from, `🔧 Compressing *${pdfName}.pdf* at ${quality}% quality...`);
+        await sendText(
+          from,
+          `🔧 Compressing *${pdfName}.pdf* at ${quality}% quality...`
+        );
 
         const compressedPath = await compressPdf(originalPdfPath, quality);
         await sendDocument(from, compressedPath);
@@ -242,7 +277,10 @@ async function handleMenuSelection(from, id) {
     case "make_pdf":
       userStates[from] = "make_pdf";
       userImages[from] = [];
-      await sendText(from, "📸 Send all images, then type *PDF name* when done.");
+      await sendText(
+        from,
+        "📸 Send all images, then type *PDF name* when done."
+      );
       break;
     case "remove_pages":
       userStates[from] = "remove_pages";
@@ -251,7 +289,10 @@ async function handleMenuSelection(from, id) {
     case "merge_pdfs":
       userStates[from] = "merge_pdfs";
       userMergeFiles[from] = [];
-      await sendText(from, "📎 Send all PDFs to merge, then type *done MyFile*.");
+      await sendText(
+        from,
+        "📎 Send all PDFs to merge, then type *done MyFile*."
+      );
       break;
     case "compress_pdf":
       userStates[from] = "compress_pdf";
@@ -261,7 +302,6 @@ async function handleMenuSelection(from, id) {
       await sendInteractiveMenu(from);
   }
 }
-
 
 // 📥 Download received PDF file
 async function downloadPdf(url) {
