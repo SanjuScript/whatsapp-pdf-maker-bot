@@ -1,6 +1,10 @@
+require("dotenv").config();
+
+console.log("🔑 Using token:", process.env.TOKEN ? "Loaded ✅" : "Missings ❌");
+
 module.exports = {
-  PORT: 3000,
-  TOKEN: "EAAQPSNPpky4BPxHrKvNb71EqaMoqZACcXS3lFLllO6zoz7qmytKQvUBwHNgQZCz9iiBoUcSlDl7CXDbPjZCuIqZAkm7FIjysacxHRbZA8E5qSpiWIXYhzdxslaX4Esgr05W4YuudeRuE5BK5mgxZAh7SFcYpvEX3h0GZANObZCL29G7N2HUzo18tcA3JtgfDGbu33ZBE1Ku4dsNZBLDmv5UmKx0L8VFz3gcggAH5kZABdoRgYbSZAP9V9PSluI7MT1ZC7XzZBbnJMdRgoZBEZB8OWf8VFvvO",
-  PHONE_NUMBER_ID: "803508609519892",
-  VERIFY_TOKEN: "Ppky4BP5LIOYi1GxLL2ua9Jt2ioaX",
+  PORT: process.env.PORT || 3000,
+  TOKEN: process.env.TOKEN,
+  PHONE_NUMBER_ID: process.env.PHONE_NUMBER_ID,
+  VERIFY_TOKEN: process.env.VERIFY_TOKEN,
 };
